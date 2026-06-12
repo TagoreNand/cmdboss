@@ -456,42 +456,6 @@ timeline
 
 ---
 
-## Pushing to GitHub
-
-Publish everything to [`TagoreNand/cmdboss`](https://github.com/TagoreNand/cmdboss.git).
-Run these from the project folder:
-
-```bash
-cd cmdboss-main                     # your local project folder
-
-# 1) initialise git (skip if this folder is already a clone)
-git init
-git branch -M main
-
-# 2) point origin at the repo (add, or update if it already exists)
-git remote add origin https://github.com/TagoreNand/cmdboss.git \
-  || git remote set-url origin https://github.com/TagoreNand/cmdboss.git
-
-# 3) stage + commit everything
-git add -A
-git commit -m "feat: enterprise CMDBoss — declarative registry, dependency graph, discovery, production hardening"
-
-# 4) publish — the remote holds the old baseline, so replace it
-git push -u origin main --force
-```
-
-For a **milestone-by-milestone history** (one commit per build step) instead of a
-single commit, run the provided script:
-
-```bash
-bash scripts/git_push.sh            # creates 6 narrative commits, then force-pushes
-```
-
-> `--force` overwrites the previous `main` (the original `exec`-based baseline).
-> Drop `--force` and `git pull --rebase` first if you want to preserve that history.
-
----
-
 ## Project structure
 
 ```

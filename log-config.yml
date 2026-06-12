@@ -1,0 +1,72 @@
+# =============================================================================
+# CMDBoss — Logging Configuration
+# Structured logging with separate handlers for access, app, and error logs.
+# Reference: https://docs.python.org/3/library/logging.config.html
+# =============================================================================
+
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  default:
+    format: "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+
+  json:
+    "()": "pythonjsonlogger.jsonlogger.JsonFormatter"
+    format: "%(asctime)s %(levelname)s %(name)s %(message)s"
+
+  access:
+    format: "%(asctime)s | ACCESS | %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: default
+    stream: ext://sys.stdout
+
+  access_console:
+    class: logging.StreamHandler
+    formatter: access
+    stream: ext://sys.stdout
+
+loggers:
+  cmdboss:
+    level: INFO
+    handlers: [console]
+    propagate: false
+
+  uvicorn:
+    level: INFO
+    handlers: [console]
+    propagate: false
+
+  uvicorn.error:
+    level: INFO
+    handlers: [console]
+    propagate: false
+
+  uvicorn.access:
+    level: INFO
+    handlers: [access_console]
+    propagate: false
+
+  gunicorn:
+    level: INFO
+    handlers: [console]
+    propagate: false
+
+  gunicorn.error:
+    level: INFO
+    handlers: [console]
+    propagate: false
+
+  gunicorn.access:
+    level: INFO
+    handlers: [access_console]
+    propagate: false
+
+root:
+  level: WARNING
+  handlers: [console]

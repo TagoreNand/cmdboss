@@ -1,0 +1,21 @@
+{
+  "_comment": "CMDBoss Runtime Configuration — edit before deploying",
+
+  "mongo_uri": "mongodb://mongo:27017",
+  "db_name": "cmdboss",
+
+  "host": "0.0.0.0",
+  "port": 8000,
+
+  "workers": 4,
+  "log_level": "info",
+
+  "cors_origins": ["*"],
+
+  "_notes": {
+    "mongo_uri": "Use 'mongodb://localhost:27017' for local dev without Docker",
+    "log_level": "One of: debug | info | warning | error | critical",
+    "workers": "Gunicorn worker count — typically (2 x CPU cores) + 1",
+    "cors_origins": "Restrict to specific domains in production, e.g. ['https://yourdomain.com']"
+  }
+}

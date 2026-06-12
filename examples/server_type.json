@@ -1,0 +1,57 @@
+{
+  "name": "server",
+  "description": "Physical or virtual server / compute asset.",
+  "fields": {
+    "hostname": {
+      "type": "string",
+      "required": true,
+      "description": "Fully qualified hostname",
+      "min_length": 1,
+      "max_length": 253
+    },
+    "ip_address": {
+      "type": "string",
+      "required": true,
+      "description": "Primary IPv4 address",
+      "pattern": "^(\\d{1,3}\\.){3}\\d{1,3}$"
+    },
+    "os": {
+      "type": "string",
+      "required": true,
+      "description": "Operating system"
+    },
+    "environment": {
+      "type": "string",
+      "required": true,
+      "description": "Deployment environment",
+      "enum": ["production", "staging", "development", "dr"]
+    },
+    "owner": {
+      "type": "string",
+      "required": false,
+      "description": "Team or individual owner"
+    },
+    "rack_unit": {
+      "type": "integer",
+      "required": false,
+      "minimum": 1,
+      "maximum": 48,
+      "description": "Physical rack unit position"
+    },
+    "tags": {
+      "type": "array",
+      "items": "string",
+      "required": false,
+      "description": "Free-form tags"
+    },
+    "notes": {
+      "type": "string",
+      "required": false,
+      "description": "Free-text notes"
+    }
+  },
+  "indexes": [
+    { "fields": ["hostname"], "unique": true },
+    { "fields": ["environment"], "unique": false }
+  ]
+}

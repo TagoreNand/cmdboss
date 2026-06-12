@@ -1,0 +1,53 @@
+"""
+CMDBoss Example Model — Server
+================================
+Upload this file to CMDBoss via POST /models/upload to auto-generate
+full CRUD REST endpoints for server/infrastructure records.
+
+Usage:
+    curl -X POST "http://localhost:8000/models/upload" \
+      -F "file=@examples/models/server.py"
+
+This will create:
+    GET    /server
+    POST   /server
+    GET    /server/{id}
+    PUT    /server/{id}
+    DELETE /server/{id}
+"""
+
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from enum import Enum
+
+
+class Environment(str, Enum):
+    production = "production"
+    staging = "staging"
+    development = "development"
+    dr = "dr"
+
+
+class Server(BaseModel):
+    hostname: str = Field(..., description="Fully qualified hostname", example="web-prod-01.example.com")
+    ip_address: str = Field(..., description="Primary IPv4 address", example="10.0.1.100")
+    os: str = Field(..., description="Operating system", example="Ubuntu 22.04 LTS")
+    environment: Environment = Field(..., description="Deployment environment")
+    owner: Optional[str] = Field(None, description="Team or individual owner", example="platform-team")
+    rack_unit: Optional[int] = Field(None, description="Physical rack unit position", example=12)
+    tags: Optional[List[str]] = Field(default_factory=list, description="Free-form tags", example=["web", "nginx"])
+    notes: Optional[str] = Field(None, description="Free-text notes")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "hostname": "web-prod-01.example.com",
+                "ip_address": "10.0.1.100",
+                "os": "Ubuntu 22.04 LTS",
+                "environment": "production",
+                "owner": "platform-team",
+                "rack_unit": 12,
+                "tags": ["web", "nginx"],
+                "notes": "Primary web server — do not reboot without approval.",
+            }
+        }

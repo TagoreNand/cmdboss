@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Ruff (lint)
+        run: ruff check .
+
+      - name: Pytest (unit + integration, no live MongoDB needed)
+        run: pytest --cov=cmdboss --cov-report=term-missing --cov-fail-under=85
+
+  # Optional: a smoke job that boots the app against a real MongoDB service to
+  # catch integration issues mongomock cannot (index semantics, real driver).
+  integration-mongo:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:6.0
+        ports: ["27017:27017"]
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })'"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+      - name: Boot app and probe readiness against real Mongo
+        env:
+          CMDBOSS_MONGO_URI: mongodb://localhost:27017
+          CMDBOSS_DB_NAME: cmdboss_ci
+          CMDBOSS_AUTH_ENABLED: "false"
+        run: |
+          python -m uvicorn cmdboss.app:app --host 127.0.0.1 --port 8000 &
+          APP_PID=$!
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8000/api/v1/readyz; then echo "ready"; break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8000/ | grep -q CMDBoss
+          kill $APP_PID

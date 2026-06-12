@@ -1,0 +1,53 @@
+"""
+CMDBoss Example Hook — Server
+===============================
+This hook fires asynchronously on CRUD operations for the 'server' collection.
+
+Hooks are Python callables that receive the affected document as a dict.
+They run in a background thread and must not block the main request thread.
+
+Supported events: on_create, on_read, on_update, on_delete
+"""
+
+import logging
+
+logger = logging.getLogger("cmdboss.hooks.server")
+
+
+def on_create(document: dict) -> None:
+    """
+    Fires after a new server record is created.
+    Use this to: notify Slack, trigger provisioning, update IPAM, etc.
+    """
+    logger.info("[HOOK] Server created: %s (%s)", document.get("hostname"), document.get("ip_address"))
+
+    # Example: Post to a Slack webhook
+    # import requests
+    # requests.post(SLACK_WEBHOOK_URL, json={"text": f"New server registered: {document['hostname']}"})
+
+
+def on_update(document: dict) -> None:
+    """
+    Fires after a server record is updated.
+    Use this to: record change history, invalidate cache, notify owners, etc.
+    """
+    logger.info("[HOOK] Server updated: %s", document.get("hostname"))
+
+
+def on_delete(document: dict) -> None:
+    """
+    Fires after a server record is deleted.
+    Use this to: trigger decommission workflows, release IP addresses, etc.
+    """
+    logger.warning("[HOOK] Server deleted: %s (%s)", document.get("hostname"), document.get("ip_address"))
+
+    # Example: Trigger a decommission workflow
+    # decommission_workflow.run(hostname=document["hostname"])
+
+
+def on_read(document: dict) -> None:
+    """
+    Fires after a server record is read.
+    Typically used for audit logging — keep this lightweight.
+    """
+    logger.debug("[HOOK] Server read: %s", document.get("hostname"))

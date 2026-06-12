@@ -1,0 +1,82 @@
+# =============================================================================
+# CMDBoss — Docker Compose Stack
+# Starts CMDBoss (FastAPI/Gunicorn) + MongoDB
+#
+# Usage:
+#   docker compose up --build        → build and run
+#   docker compose up -d             → run in background
+#   docker compose logs -f cmdboss   → tail logs
+#   docker compose down -v           → stop and remove volumes
+# =============================================================================
+
+version: "3.9"
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # MongoDB — persistent datastore
+  # ---------------------------------------------------------------------------
+  mongo:
+    image: mongo:6.0
+    container_name: cmdboss-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: cmdboss
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"          # Expose only if you need external DB access
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - cmdboss-net
+
+  # ---------------------------------------------------------------------------
+  # CMDBoss — FastAPI application
+  # ---------------------------------------------------------------------------
+  cmdboss:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: cmdboss-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Env vars (prefixed CMDBOSS_) override config.json.
+      - CMDBOSS_MONGO_URI=mongodb://mongo:27017
+      - CMDBOSS_DB_NAME=cmdboss
+      - CMDBOSS_LOG_LEVEL=INFO
+      - CMDBOSS_AUTH_ENABLED=true
+      # First-boot admin key — CHANGE THIS and rotate after minting real keys.
+      - CMDBOSS_BOOTSTRAP_ADMIN_KEY=${CMDBOSS_BOOTSTRAP_ADMIN_KEY:-change-me-please}
+      # Restrict in production; never "*".
+      - CMDBOSS_CORS_ORIGINS=${CMDBOSS_CORS_ORIGINS:-http://localhost:3000}
+    volumes:
+      - ./config.json:/app/config.json:ro       # mount config read-only (overridden by env above)
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - cmdboss-net
+
+# ---------------------------------------------------------------------------
+# Volumes & Networks
+# ---------------------------------------------------------------------------
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  cmdboss-net:
+    driver: bridge
